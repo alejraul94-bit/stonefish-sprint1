@@ -1,0 +1,128 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  color: #222;
+}
+
+.app {
+  min-height: 100vh;
+}
+
+header {
+  background: #1f2937;
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  margin: 0;
+}
+
+nav {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  cursor: pointer;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+}
+
+nav button {
+  background: white;
+  color: #1f2937;
+}
+
+main {
+  max-width: 1000px;
+  margin: auto;
+  padding: 30px 20px;
+}
+
+.productos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.card,
+.detalle,
+.carrito {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.card {
+  text-align: center;
+}
+
+.card button,
+.principal {
+  background: #2563eb;
+  color: white;
+}
+
+.imagen-placeholder {
+  height: 150px;
+  background: #e5e7eb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  color: #6b7280;
+}
+
+.grande {
+  height: 260px;
+  margin-top: 20px;
+}
+
+.detalle {
+  max-width: 600px;
+  margin: auto;
+}
+
+.item-carrito {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 20px;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding: 15px 0;
+}
+
+.cantidad {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cantidad button {
+  background: #e5e7eb;
+  width: 35px;
+  height: 35px;
+  padding: 0;
+}
+
+@media (max-width: 600px) {
+  header {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .item-carrito {
+    grid-template-columns: 1fr;
+  }
+}
