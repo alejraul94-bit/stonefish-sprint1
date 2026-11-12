@@ -37,8 +37,80 @@ export default function App() {
     setVista("detalle");
   };
 
+  const eliminarProducto = (id) => {
+    const confirmar = window.confirm(
+      "¿Seguro que deseas eliminar este producto?"
+    );
+
+    if (!confirmar) {
+      return;
+    }
+
+    setProductos(
+      productos.filter((producto) => producto.id !== id)
+    );
+
+    alert("Producto eliminado correctamente");
+  };
+
+  const editarProducto = (producto) => {
+    const nuevoNombre = window.prompt(
+      "Nuevo nombre del producto:",
+      producto.nombre
+    );
+
+    if (nuevoNombre === null || nuevoNombre.trim() === "") {
+      return;
+    }
+
+    const nuevoPrecio = window.prompt(
+      "Nuevo precio:",
+      producto.precio
+    );
+
+    if (
+      nuevoPrecio === null ||
+      isNaN(nuevoPrecio) ||
+      Number(nuevoPrecio) <= 0
+    ) {
+      alert("El precio no es válido");
+      return;
+    }
+
+    const nuevoStock = window.prompt(
+      "Nuevo stock:",
+      producto.stock
+    );
+
+    if (
+      nuevoStock === null ||
+      isNaN(nuevoStock) ||
+      Number(nuevoStock) < 0
+    ) {
+      alert("El stock no es válido");
+      return;
+    }
+
+    const productosActualizados = productos.map((item) =>
+      item.id === producto.id
+        ? {
+            ...item,
+            nombre: nuevoNombre.trim(),
+            precio: Number(nuevoPrecio),
+            stock: Number(nuevoStock),
+          }
+        : item
+    );
+
+    setProductos(productosActualizados);
+
+    alert("Producto actualizado correctamente");
+  };
+
   const agregarAlCarrito = (producto) => {
-    const existe = carrito.find((item) => item.id === producto.id);
+    const existe = carrito.find(
+      (item) => item.id === producto.id
+    );
 
     if (existe) {
       if (existe.cantidad >= producto.stock) {
@@ -49,7 +121,10 @@ export default function App() {
       setCarrito(
         carrito.map((item) =>
           item.id === producto.id
-            ? { ...item, cantidad: item.cantidad + 1 }
+            ? {
+                ...item,
+                cantidad: item.cantidad + 1,
+              }
             : item
         )
       );
@@ -59,7 +134,13 @@ export default function App() {
         return;
       }
 
-      setCarrito([...carrito, { ...producto, cantidad: 1 }]);
+      setCarrito([
+        ...carrito,
+        {
+          ...producto,
+          cantidad: 1,
+        },
+      ]);
     }
 
     setVista("carrito");
@@ -70,10 +151,13 @@ export default function App() {
       carrito
         .map((item) => {
           if (item.id === id) {
-            const nuevaCantidad = item.cantidad + cambio;
+            const nuevaCantidad =
+              item.cantidad + cambio;
 
             if (nuevaCantidad > item.stock) {
-              alert("No puedes superar el stock disponible");
+              alert(
+                "No puedes superar el stock disponible"
+              );
               return item;
             }
 
@@ -90,25 +174,30 @@ export default function App() {
   };
 
   const total = carrito.reduce(
-    (suma, item) => suma + item.precio * item.cantidad,
+    (suma, item) =>
+      suma + item.precio * item.cantidad,
     0
   );
 
   const confirmarVenta = () => {
-    const productosActualizados = productos.map((producto) => {
-      const itemVendido = carrito.find(
-        (item) => item.id === producto.id
-      );
+    const productosActualizados = productos.map(
+      (producto) => {
+        const itemVendido = carrito.find(
+          (item) => item.id === producto.id
+        );
 
-      if (itemVendido) {
-        return {
-          ...producto,
-          stock: producto.stock - itemVendido.cantidad,
-        };
+        if (itemVendido) {
+          return {
+            ...producto,
+            stock:
+              producto.stock -
+              itemVendido.cantidad,
+          };
+        }
+
+        return producto;
       }
-
-      return producto;
-    });
+    );
 
     setProductos(productosActualizados);
 
@@ -133,11 +222,15 @@ export default function App() {
         <h1>Stone Fish</h1>
 
         <nav>
-          <button onClick={() => setVista("catalogo")}>
+          <button
+            onClick={() => setVista("catalogo")}
+          >
             Catálogo
           </button>
 
-          <button onClick={() => setVista("carrito")}>
+          <button
+            onClick={() => setVista("carrito")}
+          >
             Carrito ({carrito.length})
           </button>
         </nav>
@@ -151,23 +244,49 @@ export default function App() {
 
             <div className="productos">
               {productos.map((producto) => (
-                <div className="card" key={producto.id}>
+                <div
+                  className="card"
+                  key={producto.id}
+                >
                   <div className="imagen-placeholder">
                     Imagen
                   </div>
 
                   <h3>{producto.nombre}</h3>
 
-                  <p>${producto.precio}</p>
+                  <p>
+                    ${producto.precio}
+                  </p>
 
                   <p>
-                    Stock disponible: {producto.stock}
+                    Stock disponible:{" "}
+                    {producto.stock}
                   </p>
 
                   <button
-                    onClick={() => verDetalle(producto)}
+                    onClick={() =>
+                      verDetalle(producto)
+                    }
                   >
                     Ver detalle
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      editarProducto(producto)
+                    }
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      eliminarProducto(
+                        producto.id
+                      )
+                    }
+                  >
+                    Eliminar
                   </button>
                 </div>
               ))}
@@ -175,44 +294,58 @@ export default function App() {
           </>
         )}
 
-        {/* DETALLE DEL PRODUCTO */}
-        {vista === "detalle" && productoSeleccionado && (
-          <section className="detalle">
-            <button
-              onClick={() => setVista("catalogo")}
-            >
-              ← Volver
-            </button>
+        {/* DETALLE */}
+        {vista === "detalle" &&
+          productoSeleccionado && (
+            <section className="detalle">
+              <button
+                onClick={() =>
+                  setVista("catalogo")
+                }
+              >
+                ← Volver
+              </button>
 
-            <div className="imagen-placeholder grande">
-              Imagen
-            </div>
+              <div className="imagen-placeholder grande">
+                Imagen
+              </div>
 
-            <h2>{productoSeleccionado.nombre}</h2>
+              <h2>
+                {productoSeleccionado.nombre}
+              </h2>
 
-            <p>
-              {productoSeleccionado.descripcion}
-            </p>
+              <p>
+                {
+                  productoSeleccionado.descripcion
+                }
+              </p>
 
-            <h3>
-              ${productoSeleccionado.precio}
-            </h3>
+              <h3>
+                $
+                {
+                  productoSeleccionado.precio
+                }
+              </h3>
 
-            <p>
-              Stock disponible:{" "}
-              {productoSeleccionado.stock}
-            </p>
+              <p>
+                Stock disponible:{" "}
+                {
+                  productoSeleccionado.stock
+                }
+              </p>
 
-            <button
-              className="principal"
-              onClick={() =>
-                agregarAlCarrito(productoSeleccionado)
-              }
-            >
-              Agregar al carrito
-            </button>
-          </section>
-        )}
+              <button
+                className="principal"
+                onClick={() =>
+                  agregarAlCarrito(
+                    productoSeleccionado
+                  )
+                }
+              >
+                Agregar al carrito
+              </button>
+            </section>
+          )}
 
         {/* CARRITO */}
         {vista === "carrito" && (
@@ -220,7 +353,9 @@ export default function App() {
             <h2>Carrito de compras</h2>
 
             {carrito.length === 0 ? (
-              <p>Tu carrito está vacío.</p>
+              <p>
+                Tu carrito está vacío.
+              </p>
             ) : (
               <div className="carrito">
                 {carrito.map((item) => (
@@ -229,21 +364,27 @@ export default function App() {
                     key={item.id}
                   >
                     <div>
-                      <strong>{item.nombre}</strong>
+                      <strong>
+                        {item.nombre}
+                      </strong>
 
                       <p>
                         ${item.precio} c/u
                       </p>
 
                       <p>
-                        Stock disponible: {item.stock}
+                        Stock disponible:{" "}
+                        {item.stock}
                       </p>
                     </div>
 
                     <div className="cantidad">
                       <button
                         onClick={() =>
-                          cambiarCantidad(item.id, -1)
+                          cambiarCantidad(
+                            item.id,
+                            -1
+                          )
                         }
                       >
                         -
@@ -255,7 +396,10 @@ export default function App() {
 
                       <button
                         onClick={() =>
-                          cambiarCantidad(item.id, 1)
+                          cambiarCantidad(
+                            item.id,
+                            1
+                          )
                         }
                       >
                         +
@@ -263,7 +407,9 @@ export default function App() {
                     </div>
 
                     <strong>
-                      ${item.precio * item.cantidad}
+                      $
+                      {item.precio *
+                        item.cantidad}
                     </strong>
                   </div>
                 ))}
@@ -283,56 +429,67 @@ export default function App() {
           </>
         )}
 
-        {/* TICKET DE VENTA */}
-        {vista === "ticket" && ultimaVenta && (
-          <section className="detalle">
-            <h2>Ticket de venta</h2>
+        {/* TICKET */}
+        {vista === "ticket" &&
+          ultimaVenta && (
+            <section className="detalle">
+              <h2>Ticket de venta</h2>
 
-            <p>
-              <strong>Folio:</strong>{" "}
-              {ultimaVenta.folio}
-            </p>
+              <p>
+                <strong>Folio:</strong>{" "}
+                {ultimaVenta.folio}
+              </p>
 
-            <p>
-              <strong>Fecha:</strong>{" "}
-              {ultimaVenta.fecha}
-            </p>
+              <p>
+                <strong>Fecha:</strong>{" "}
+                {ultimaVenta.fecha}
+              </p>
 
-            <hr />
+              <hr />
 
-            {ultimaVenta.productos.map((item) => (
-              <div
-                key={item.id}
-                className="item-carrito"
+              {ultimaVenta.productos.map(
+                (item) => (
+                  <div
+                    key={item.id}
+                    className="item-carrito"
+                  >
+                    <div>
+                      <strong>
+                        {item.nombre}
+                      </strong>
+
+                      <p>
+                        {item.cantidad} x $
+                        {item.precio}
+                      </p>
+                    </div>
+
+                    <strong>
+                      $
+                      {item.precio *
+                        item.cantidad}
+                    </strong>
+                  </div>
+                )
+              )}
+
+              <hr />
+
+              <h3>
+                Total: $
+                {ultimaVenta.total}
+              </h3>
+
+              <button
+                className="principal"
+                onClick={() =>
+                  setVista("catalogo")
+                }
               >
-                <div>
-                  <strong>{item.nombre}</strong>
-
-                  <p>
-                    {item.cantidad} x ${item.precio}
-                  </p>
-                </div>
-
-                <strong>
-                  ${item.precio * item.cantidad}
-                </strong>
-              </div>
-            ))}
-
-            <hr />
-
-            <h3>
-              Total: ${ultimaVenta.total}
-            </h3>
-
-            <button
-              className="principal"
-              onClick={() => setVista("catalogo")}
-            >
-              Volver al catálogo
-            </button>
-          </section>
-        )}
+                Volver al catálogo
+              </button>
+            </section>
+          )}
       </main>
     </div>
   );
