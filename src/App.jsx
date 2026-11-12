@@ -6,18 +6,21 @@ const productosIniciales = [
     id: 1,
     nombre: "Playera Urban",
     precio: 299,
+    stock: 10,
     descripcion: "Playera de algodón con corte urbano y diseño minimalista.",
   },
   {
     id: 2,
     nombre: "Sudadera Essential",
     precio: 599,
+    stock: 8,
     descripcion: "Sudadera cómoda para uso diario con acabado suave.",
   },
   {
     id: 3,
     nombre: "Gorra Street",
     precio: 249,
+    stock: 12,
     descripcion: "Gorra ajustable con diseño casual.",
   },
 ];
@@ -26,6 +29,7 @@ export default function App() {
   const [vista, setVista] = useState("catalogo");
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [carrito, setCarrito] = useState([]);
+  const [productos, setProductos] = useState(productosIniciales);
 
   const verDetalle = (producto) => {
     setProductoSeleccionado(producto);
@@ -33,34 +37,53 @@ export default function App() {
   };
 
   const agregarAlCarrito = (producto) => {
-    const existe = carrito.find((item) => item.id === producto.id);
+  const existe = carrito.find((item) => item.id === producto.id);
 
-    if (existe) {
-      setCarrito(
-        carrito.map((item) =>
-          item.id === producto.id
-            ? { ...item, cantidad: item.cantidad + 1 }
-            : item
-        )
-      );
-    } else {
-      setCarrito([...carrito, { ...producto, cantidad: 1 }]);
+  if (existe) {
+    if (existe.cantidad >= producto.stock) {
+      alert("No hay suficiente stock disponible");
+      return;
     }
 
-    setVista("carrito");
-  };
+    setCarrito(
+      carrito.map((item) =>
+        item.id === producto.id
+          ? { ...item, cantidad: item.cantidad + 1 }
+          : item
+      )
+    );
+  } else {
+    if (producto.stock <= 0) {
+      alert("Producto sin stock");
+      return;
+    }
+
+    setCarrito([...carrito, { ...producto, cantidad: 1 }]);
+  }
+
+  setVista("carrito");
+};
 
   const cambiarCantidad = (id, cambio) => {
-    setCarrito(
-      carrito
-        .map((item) =>
-          item.id === id
-            ? { ...item, cantidad: item.cantidad + cambio }
-            : item
-        )
-        .filter((item) => item.cantidad > 0)
-    );
-  };
+  setCarrito(
+    carrito
+      .map((item) => {
+        if (item.id === id) {
+          const nuevaCantidad = item.cantidad + cambio;
+
+          if (nuevaCantidad > item.stock) {
+            alert("No puedes superar el stock disponible");
+            return item;
+          }
+
+          return { ...item, cantidad: nuevaCantidad };
+        }
+
+        return item;
+      })
+      .filter((item) => item.cantidad > 0)
+  );
+};
 
   const total = carrito.reduce(
     (suma, item) => suma + item.precio * item.cantidad,
@@ -86,7 +109,7 @@ export default function App() {
             <h2>Catálogo de productos</h2>
 
             <div className="productos">
-              {productosIniciales.map((producto) => (
+              {productos.map((producto) => (
                 <div className="card" key={producto.id}>
                   <div className="imagen-placeholder">
                     Imagen
@@ -94,6 +117,7 @@ export default function App() {
 
                   <h3>{producto.nombre}</h3>
                   <p>${producto.precio}</p>
+                  <p>Stock disponible: {producto.stock}</p>
 
                   <button onClick={() => verDetalle(producto)}>
                     Ver detalle
@@ -117,6 +141,7 @@ export default function App() {
             <h2>{productoSeleccionado.nombre}</h2>
             <p>{productoSeleccionado.descripcion}</p>
             <h3>${productoSeleccionado.precio}</h3>
+            <p>Stock disponible: {productoSeleccionado.stock}</p>
 
             <button
               className="principal"
@@ -168,13 +193,31 @@ export default function App() {
                 <button
                   className="principal"
                   onClick={() => {
+                    const productosActualizados = productos.map((producto) => {
+                      const itemVendido = carrito.find(
+                        (item) => item.id === producto.id
+                      );
+
+                      if (itemVendido) {
+                        return {
+                          ...producto,
+                          stock: producto.stock - itemVendido.cantidad,
+                        };
+                      }
+
+                      return producto;
+                    });
+
+                    setProductos(productosActualizados);
+
                     alert("Venta realizada correctamente");
+
                     setCarrito([]);
                     setVista("catalogo");
-                  }}
-                >
-  Confirmar venta
-</button>
+                    }}
+                  >
+                    Confirmar venta
+                </button>
               </div>
             )}
           </>
