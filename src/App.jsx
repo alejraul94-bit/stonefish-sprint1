@@ -30,6 +30,7 @@ export default function App() {
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [carrito, setCarrito] = useState([]);
   const [productos, setProductos] = useState(productosIniciales);
+  const [ultimaVenta, setUltimaVenta] = useState(null);
 
   const verDetalle = (producto) => {
     setProductoSeleccionado(producto);
@@ -37,58 +38,94 @@ export default function App() {
   };
 
   const agregarAlCarrito = (producto) => {
-  const existe = carrito.find((item) => item.id === producto.id);
+    const existe = carrito.find((item) => item.id === producto.id);
 
-  if (existe) {
-    if (existe.cantidad >= producto.stock) {
-      alert("No hay suficiente stock disponible");
-      return;
+    if (existe) {
+      if (existe.cantidad >= producto.stock) {
+        alert("No hay suficiente stock disponible");
+        return;
+      }
+
+      setCarrito(
+        carrito.map((item) =>
+          item.id === producto.id
+            ? { ...item, cantidad: item.cantidad + 1 }
+            : item
+        )
+      );
+    } else {
+      if (producto.stock <= 0) {
+        alert("Producto sin stock");
+        return;
+      }
+
+      setCarrito([...carrito, { ...producto, cantidad: 1 }]);
     }
 
-    setCarrito(
-      carrito.map((item) =>
-        item.id === producto.id
-          ? { ...item, cantidad: item.cantidad + 1 }
-          : item
-      )
-    );
-  } else {
-    if (producto.stock <= 0) {
-      alert("Producto sin stock");
-      return;
-    }
-
-    setCarrito([...carrito, { ...producto, cantidad: 1 }]);
-  }
-
-  setVista("carrito");
-};
+    setVista("carrito");
+  };
 
   const cambiarCantidad = (id, cambio) => {
-  setCarrito(
-    carrito
-      .map((item) => {
-        if (item.id === id) {
-          const nuevaCantidad = item.cantidad + cambio;
+    setCarrito(
+      carrito
+        .map((item) => {
+          if (item.id === id) {
+            const nuevaCantidad = item.cantidad + cambio;
 
-          if (nuevaCantidad > item.stock) {
-            alert("No puedes superar el stock disponible");
-            return item;
+            if (nuevaCantidad > item.stock) {
+              alert("No puedes superar el stock disponible");
+              return item;
+            }
+
+            return {
+              ...item,
+              cantidad: nuevaCantidad,
+            };
           }
 
-          return { ...item, cantidad: nuevaCantidad };
-        }
-
-        return item;
-      })
-      .filter((item) => item.cantidad > 0)
-  );
-};
+          return item;
+        })
+        .filter((item) => item.cantidad > 0)
+    );
+  };
 
   const total = carrito.reduce(
     (suma, item) => suma + item.precio * item.cantidad,
     0
   );
+
+  const confirmarVenta = () => {
+    const productosActualizados = productos.map((producto) => {
+      const itemVendido = carrito.find(
+        (item) => item.id === producto.id
+      );
+
+      if (itemVendido) {
+        return {
+          ...producto,
+          stock: producto.stock - itemVendido.cantidad,
+        };
+      }
+
+      return producto;
+    });
+
+    setProductos(productosActualizados);
+
+    const venta = {
+      folio: Date.now(),
+      fecha: new Date().toLocaleString(),
+      productos: carrito,
+      total: total,
+    };
+
+    setUltimaVenta(venta);
+
+    alert("Venta realizada correctamente");
+
+    setCarrito([]);
+    setVista("ticket");
+  };
 
   return (
     <div className="app">
@@ -96,7 +133,10 @@ export default function App() {
         <h1>Stone Fish</h1>
 
         <nav>
-          <button onClick={() => setVista("catalogo")}>Catálogo</button>
+          <button onClick={() => setVista("catalogo")}>
+            Catálogo
+          </button>
+
           <button onClick={() => setVista("carrito")}>
             Carrito ({carrito.length})
           </button>
@@ -104,6 +144,7 @@ export default function App() {
       </header>
 
       <main>
+        {/* CATÁLOGO */}
         {vista === "catalogo" && (
           <>
             <h2>Catálogo de productos</h2>
@@ -116,10 +157,16 @@ export default function App() {
                   </div>
 
                   <h3>{producto.nombre}</h3>
-                  <p>${producto.precio}</p>
-                  <p>Stock disponible: {producto.stock}</p>
 
-                  <button onClick={() => verDetalle(producto)}>
+                  <p>${producto.precio}</p>
+
+                  <p>
+                    Stock disponible: {producto.stock}
+                  </p>
+
+                  <button
+                    onClick={() => verDetalle(producto)}
+                  >
                     Ver detalle
                   </button>
                 </div>
@@ -128,9 +175,12 @@ export default function App() {
           </>
         )}
 
+        {/* DETALLE DEL PRODUCTO */}
         {vista === "detalle" && productoSeleccionado && (
           <section className="detalle">
-            <button onClick={() => setVista("catalogo")}>
+            <button
+              onClick={() => setVista("catalogo")}
+            >
               ← Volver
             </button>
 
@@ -139,19 +189,32 @@ export default function App() {
             </div>
 
             <h2>{productoSeleccionado.nombre}</h2>
-            <p>{productoSeleccionado.descripcion}</p>
-            <h3>${productoSeleccionado.precio}</h3>
-            <p>Stock disponible: {productoSeleccionado.stock}</p>
+
+            <p>
+              {productoSeleccionado.descripcion}
+            </p>
+
+            <h3>
+              ${productoSeleccionado.precio}
+            </h3>
+
+            <p>
+              Stock disponible:{" "}
+              {productoSeleccionado.stock}
+            </p>
 
             <button
               className="principal"
-              onClick={() => agregarAlCarrito(productoSeleccionado)}
+              onClick={() =>
+                agregarAlCarrito(productoSeleccionado)
+              }
             >
               Agregar al carrito
             </button>
           </section>
         )}
 
+        {/* CARRITO */}
         {vista === "carrito" && (
           <>
             <h2>Carrito de compras</h2>
@@ -161,23 +224,39 @@ export default function App() {
             ) : (
               <div className="carrito">
                 {carrito.map((item) => (
-                  <div className="item-carrito" key={item.id}>
+                  <div
+                    className="item-carrito"
+                    key={item.id}
+                  >
                     <div>
                       <strong>{item.nombre}</strong>
-                      <p>${item.precio} c/u</p>
+
+                      <p>
+                        ${item.precio} c/u
+                      </p>
+
+                      <p>
+                        Stock disponible: {item.stock}
+                      </p>
                     </div>
 
                     <div className="cantidad">
                       <button
-                        onClick={() => cambiarCantidad(item.id, -1)}
+                        onClick={() =>
+                          cambiarCantidad(item.id, -1)
+                        }
                       >
                         -
                       </button>
 
-                      <span>{item.cantidad}</span>
+                      <span>
+                        {item.cantidad}
+                      </span>
 
                       <button
-                        onClick={() => cambiarCantidad(item.id, 1)}
+                        onClick={() =>
+                          cambiarCantidad(item.id, 1)
+                        }
                       >
                         +
                       </button>
@@ -189,38 +268,70 @@ export default function App() {
                   </div>
                 ))}
 
-                <h3>Total: ${total}</h3>
+                <h3>
+                  Total: ${total}
+                </h3>
+
                 <button
                   className="principal"
-                  onClick={() => {
-                    const productosActualizados = productos.map((producto) => {
-                      const itemVendido = carrito.find(
-                        (item) => item.id === producto.id
-                      );
-
-                      if (itemVendido) {
-                        return {
-                          ...producto,
-                          stock: producto.stock - itemVendido.cantidad,
-                        };
-                      }
-
-                      return producto;
-                    });
-
-                    setProductos(productosActualizados);
-
-                    alert("Venta realizada correctamente");
-
-                    setCarrito([]);
-                    setVista("catalogo");
-                    }}
-                  >
-                    Confirmar venta
+                  onClick={confirmarVenta}
+                >
+                  Confirmar venta
                 </button>
               </div>
             )}
           </>
+        )}
+
+        {/* TICKET DE VENTA */}
+        {vista === "ticket" && ultimaVenta && (
+          <section className="detalle">
+            <h2>Ticket de venta</h2>
+
+            <p>
+              <strong>Folio:</strong>{" "}
+              {ultimaVenta.folio}
+            </p>
+
+            <p>
+              <strong>Fecha:</strong>{" "}
+              {ultimaVenta.fecha}
+            </p>
+
+            <hr />
+
+            {ultimaVenta.productos.map((item) => (
+              <div
+                key={item.id}
+                className="item-carrito"
+              >
+                <div>
+                  <strong>{item.nombre}</strong>
+
+                  <p>
+                    {item.cantidad} x ${item.precio}
+                  </p>
+                </div>
+
+                <strong>
+                  ${item.precio * item.cantidad}
+                </strong>
+              </div>
+            ))}
+
+            <hr />
+
+            <h3>
+              Total: ${ultimaVenta.total}
+            </h3>
+
+            <button
+              className="principal"
+              onClick={() => setVista("catalogo")}
+            >
+              Volver al catálogo
+            </button>
+          </section>
         )}
       </main>
     </div>
